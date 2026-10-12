@@ -42,7 +42,7 @@ The recommended way is Docker Compose with a volume mount so settings survive co
 ```yaml
 services:
   categorizer:
-    image: ghcr.io/ejagombar/fireflyiii-ai-categorizer:latest
+    image: ghcr.io/htrcc99/fireflyiii-ai-categorizer:latest
     restart: unless-stopped
     ports:
       - "3000:3000"
@@ -56,7 +56,7 @@ docker compose up -d
 
 Then open **http://localhost:3000** — you will be taken directly to the Settings page.
 
-For a fuller setup, this repository ships [`docker-compose.example.yml`](docker-compose.example.yml) and [`.env.example`](.env.example). The example builds the image from source (so it includes features not yet in the prebuilt image, such as the Jev pre-classifier), adds a health check, and reads configuration from a `.env` file:
+For a fuller setup, this repository ships [`docker-compose.example.yml`](docker-compose.example.yml) and [`.env.example`](.env.example). The example builds the image from source (handy for running unreleased changes; a commented line switches it to the prebuilt image), adds a health check, and reads configuration from a `.env` file:
 
 ```bash
 cp .env.example .env    # fill in your values

@@ -15,8 +15,9 @@ services:
     # (e.g. the Jev pre-classifier).
     build: .
     image: firefly-ai-categorizer:local
-    # Alternatively, use the prebuilt upstream image (may lag behind this repo):
-    # image: ghcr.io/ejagombar/fireflyiii-ai-categorizer:latest
+    # Alternatively, use the prebuilt image published by this repository's CI
+    # (remove the build line above):
+    # image: ghcr.io/htrcc99/fireflyiii-ai-categorizer:latest
     restart: unless-stopped
     env_file: .env
     ports:
