@@ -23,7 +23,7 @@ The original project is [bahuma20/firefly-iii-ai-categorize](https://github.com/
 - **In-UI configuration.** All settings, including credentials, are saved through the web interface and persisted to disk across restarts. A custom context field lets you provide additional guidance to the AI (e.g., "I have no business expenses").
 - **Destination account matching.** When enabled, the AI matches withdrawals to existing expense accounts or creates new ones automatically, with independent confidence levels for category and destination. The Review page provides a searchable dropdown to correct or create destination accounts manually. Transactions miscategorised as "Transfers" can be converted into real asset-account transfers.
 - **Manual review workflow.** The Review tab groups unconfident classifications by merchant, with the AI's best guess pre-selected in a dropdown. Apply, skip, or correct per group — and when destination matching is on, set or create the payee alongside the category.
-- **Transaction converter.** Withdrawals the AI flags as potential transfers between your own asset accounts appear in a "Convert to Transfers" panel on the Review page. Select a destination asset account and the categorizer deletes the withdrawal and creates a proper transfer — preserving the amount, date, and description.
+- **Transaction converter.** Withdrawals the AI flags as potential transfers between your own asset accounts appear in a "Convert to Transfers" panel on the Review page. The destination asset account is pre-selected for you — from previous conversions, Jev, or the AI provider — and the categorizer deletes the withdrawal and creates a proper transfer once you confirm, preserving the amount, date, and description.
 - **In-app help page.** A built-in documentation tab walks through setup, features, and configuration with step-by-step instructions and screenshots, so you don't need to leave the app.
 - **Rewritten in Go.** The Node.js/Express server has been replaced with a compiled Go binary, reducing resource usage and removing the Node.js runtime dependency.
 
@@ -234,7 +234,7 @@ All variables are optional. When they are absent, the server starts normally and
 | `JEV_HIGH_THRESHOLD` | `0.85` | Jev probability at or above which the category is accepted (`CLASSIFIED`) |
 | `JEV_LOW_THRESHOLD` | `0.50` | Below this the transaction is flagged `NEEDS_REVIEW` without an LLM call; between the two thresholds the AI provider decides |
 
-When Jev picks "none of the listed accounts" with high confidence, the AI provider is called once to name the new expense account. If a Jev call fails, transactions fall back to the AI provider and Jev is skipped for 60 seconds before being tried again. The Jobs page shows who decided each transaction: `History`, `Jev`, `Jev → LLM` or `LLM`. Jev also suggests the destination account in the Review page's "Convert to Transfers" panel, using the same thresholds.
+When Jev picks "none of the listed accounts" with high confidence, the AI provider is called once to name the new expense account. If a Jev call fails, transactions fall back to the AI provider and Jev is skipped for 60 seconds before being tried again. The Jobs page shows who decided each transaction: `History`, `Jev`, `Jev → LLM` or `LLM`. Jev also suggests the destination asset account in the Review page's "Convert to Transfers" panel, using the same thresholds: a confident answer is pre-selected (labelled `Jev`), an uncertain one is passed to the AI provider (labelled `AI`), and a very unlikely one leaves the dropdown empty.
 
 ### Server
 
@@ -279,6 +279,8 @@ This requires an extra API call to fetch your expense accounts, modestly increas
 On the **Review** page, when enabled, each group card gains a searchable Destination Account field so you can correct or set the payee manually during review. Typing a name that doesn't match any existing account shows a **NEW** badge, indicating a new expense account will be created when you apply.
 
 Additionally, transactions that the AI categorised as "Transfers" appear in a **Convert to Transfers** box below the review cards. These are withdrawals that should actually be transfers between your own asset accounts. Select a destination asset account, and the categorizer deletes the withdrawal and creates a proper transfer in its place.
+
+The destination dropdown is pre-filled automatically: a previous conversion of a transaction with the same description is reused first (`History`); otherwise Jev picks the account when the [Jev pre-classifier](#jev-pre-classifier-optional) is enabled and confident (`Jev`), and the AI provider decides in the remaining cases (`AI`). The suggestion is only a pre-selection — nothing is converted until you click **Convert to Transfer**.
 
 ## Credits
 
