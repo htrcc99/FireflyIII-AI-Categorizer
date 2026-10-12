@@ -65,6 +65,13 @@ docker compose -f docker-compose.example.yml up -d --build
 
 In `.env`, leave optional variables commented out rather than empty — an empty value overrides the built-in default.
 
+For production, [`docker-compose.prod.example.yml`](docker-compose.prod.example.yml) uses the prebuilt image from GHCR pinned to a release (`CATEGORIZER_VERSION`, default `1.0`), keeps settings in a named volume, publishes the port on `127.0.0.1` only (put a reverse proxy with authentication in front), and runs the container read-only with all capabilities dropped, a memory limit and log rotation:
+
+```bash
+cp .env.example .env    # fill in your values
+docker compose -f docker-compose.prod.example.yml up -d
+```
+
 ---
 
 ### 2. Connect to Firefly III

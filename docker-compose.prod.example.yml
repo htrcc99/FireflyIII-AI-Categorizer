@@ -1,0 +1,64 @@
+# Production example for the Firefly III AI Categorizer, using the prebuilt
+# image from GitHub Container Registry.
+#
+#   cp .env.example .env                       # fill in your values
+#   docker compose -f docker-compose.prod.example.yml up -d
+#
+# Upgrading: change CATEGORIZER_VERSION (in .env or the shell), then
+#   docker compose -f docker-compose.prod.example.yml pull
+#   docker compose -f docker-compose.prod.example.yml up -d
+#
+# SECURITY: the app has no built-in authentication. This file only publishes
+# the port on 127.0.0.1; expose it through a reverse proxy with authentication
+# (e.g. Caddy or Nginx with basic auth over HTTPS), never directly.
+
+services:
+  categorizer:
+    # Pin a release instead of "latest" so upgrades are deliberate. The "1.0"
+    # tag follows 1.0.x patch releases; use "1.0.0" to pin an exact version.
+    # Release tags are published when a GitHub release is created; until then
+    # only "latest" (built from main) exists.
+    image: ghcr.io/htrcc99/fireflyiii-ai-categorizer:${CATEGORIZER_VERSION:-1.0}
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      # Reachable from this host only (reverse proxy, local Firefly III).
+      # Firefly III on another host must reach /webhook through the proxy.
+      - "127.0.0.1:3000:3000"
+    volumes:
+      # Settings saved from the UI (including credentials) live here.
+      - categorizer-data:/data
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    # Hardening: the app only writes to /data.
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 256m
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    # If Firefly III runs in another Compose project on this host, join its
+    # network so it can call the webhook at http://categorizer:3000/webhook,
+    # and set FIREFLY_URL to Firefly's service name (e.g. http://app:8080).
+    # networks:
+    #   - default
+    #   - firefly
+
+volumes:
+  categorizer-data:
+
+# networks:
+#   firefly:
+#     external: true
+#     name: firefly_iii_default
