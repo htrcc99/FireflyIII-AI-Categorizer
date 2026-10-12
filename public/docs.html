@@ -364,7 +364,8 @@
                         <strong>Review Conversion to Transfer</strong> — transactions categorized as "Transfers" that
                         should actually be transfers between your own asset accounts. Select the destination asset
                         account and click <strong>Convert to Transfer</strong> — the categorizer deletes the withdrawal
-                        and creates a proper transfer.
+                        and creates a proper transfer. The destination is pre-selected automatically, labelled with
+                        where the suggestion came from (<em>History</em>, <em>Jev</em> or <em>AI</em>).
                     </li>
                 </ul>
                 <p>The Review tab auto-refreshes every 30 seconds while you are on it.</p>
@@ -396,13 +397,20 @@
                 <img src="/docs/images/settings_page.webp" alt="Settings page" style="display:none" onload="this.style.display=this.naturalWidth?'':'none'">
 
                 <!-- ═══════════ THREE-OUTCOME MODEL ═══════════ -->
-                <h4>Jev pre-classifier</h4>
+                <h4 id="jev">Jev pre-classifier</h4>
                 <p>
                     Enable <strong>Use Jev before the AI provider</strong> and enter an OpenRouter key to let
                     TypeSafe's Jev decision model classify transactions first. Jev returns a probability for its
                     choice: at or above the <em>accept</em> threshold the category is applied directly, below the
                     <em>review</em> threshold the transaction goes to the Review page, and anything in between is
                     sent to the AI provider. The Jobs table shows which stage decided each transaction.
+                </p>
+                <p>
+                    Jev also suggests the destination asset account in the <strong>Review Conversion to Transfer</strong>
+                    section, using the same two thresholds: a confident answer is pre-selected as <em>Jev</em>, an
+                    uncertain one is passed to the AI provider, and a very unlikely one leaves the dropdown empty
+                    (<em>Could not determine</em>). If a Jev call fails, Jev is skipped for 60 seconds and the AI
+                    provider is used instead.
                 </p>
 
                 <h2 id="outcomes">The three-outcome classification model</h2>
@@ -469,6 +477,13 @@
                     "Transfers". These are withdrawals that should actually be transfers between your own asset
                     accounts. Select the destination asset account and the categorizer converts the withdrawal into
                     a proper transfer, showing the source account so you can verify the direction of the transfer.
+                </p>
+                <p>
+                    The destination dropdown is filled in for you. Previous conversions of a transaction with the same
+                    description are reused first (<em>History</em>); otherwise Jev picks the account when the
+                    <a href="#jev">Jev pre-classifier</a> is enabled and confident (<em>Jev</em>), and the AI
+                    provider decides in the remaining cases (<em>AI</em>). The suggestion is only a pre-selection —
+                    nothing is converted until you click <strong>Convert to Transfer</strong>.
                 </p>
 
                 <!-- ═══════════ BATCH OPERATIONS ═══════════ -->
