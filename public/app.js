@@ -1762,8 +1762,8 @@ async function saveSettings() {
     payload.jev_enabled = $('#cfg-jev-enabled').prop('checked');
     var ork = $('#cfg-openrouter-key').val();
     if (ork) payload.openrouter_api_key = ork;
-    var jm = $('#cfg-jev-model').val().trim();
-    if (jm) payload.jev_model = jm;
+    // Always sent: an empty value clears the saved model and restores the default.
+    payload.jev_model = $('#cfg-jev-model').val().trim();
     var jh = parseFloat($('#cfg-jev-high').val());
     if (!isNaN(jh)) payload.jev_high_threshold = jh;
     var jl = parseFloat($('#cfg-jev-low').val());

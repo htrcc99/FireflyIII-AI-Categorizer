@@ -256,7 +256,7 @@ func (p *Pipeline) RunWithOptions(ctx context.Context, j *job.Job, transactionID
 		}
 		outcome.Category = historyMatchCat
 		outcome.Outcome = string(classifier.Classified)
-		outcome.Reason = fmt.Sprintf("Auto-matched from %d previous transactions. AI was consulted for destination.", histCatCount)
+		outcome.Reason = historyOverrideReason(histCatCount, result.Source)
 	}
 
 	// Process destination account result (when enabled and valid).
@@ -268,12 +268,7 @@ func (p *Pipeline) RunWithOptions(ctx context.Context, j *job.Job, transactionID
 
 		switch result.Destination.Action {
 		case "MATCH":
-			for _, a := range expenseAccounts {
-				if strings.EqualFold(a.Name, result.Destination.Name) {
-					outcome.DestinationID = a.ID
-					break
-				}
-			}
+			outcome.DestinationID = resolveMatchedAccount(expenseAccounts, result.Destination).ID
 			if outcome.DestinationID == "" {
 				slog.Warn("destination MATCH failed to find account", "name", result.Destination.Name)
 				destAccount = ""
@@ -456,6 +451,35 @@ func tryDestinationHistoryMatch(history []classifier.HistoricalEntry, amount *fl
 		}
 	}
 	return best, bestCount
+}
+
+// resolveMatchedAccount finds the expense account for a MATCH destination,
+// preferring the account ID the classifier chose and falling back to a
+// case-insensitive name match. It returns a zero Account when nothing matches.
+func resolveMatchedAccount(accounts []firefly.Account, dest *classifier.DestinationResult) firefly.Account {
+	if dest.ID != "" {
+		for _, a := range accounts {
+			if a.ID == dest.ID {
+				return a
+			}
+		}
+	}
+	for _, a := range accounts {
+		if strings.EqualFold(a.Name, dest.Name) {
+			return a
+		}
+	}
+	return firefly.Account{}
+}
+
+// historyOverrideReason explains a category taken from history when the
+// classifier was only consulted for the destination.
+func historyOverrideReason(count int, source string) string {
+	consulted := "AI"
+	if source == classifier.SourceJev {
+		consulted = "Jev"
+	}
+	return fmt.Sprintf("Auto-matched from %d previous transactions. %s was consulted for destination.", count, consulted)
 }
 
 func derefAmount(a *float64) float64 {

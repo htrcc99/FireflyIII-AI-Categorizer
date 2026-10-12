@@ -67,6 +67,10 @@ type DestinationResult struct {
 	Name       string // desired account name
 	Action     string // "MATCH" or "CREATE"
 	Confidence string // "CLASSIFIED" or "ASSUMED"
+
+	// ID is the existing account chosen for a MATCH, when known. Callers should
+	// prefer it over Name, which may be ambiguous across case-only duplicates.
+	ID string
 }
 
 type Request struct {

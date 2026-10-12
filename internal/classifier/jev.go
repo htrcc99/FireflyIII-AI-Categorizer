@@ -52,6 +52,7 @@ type decisionResponse struct {
 // decider is the seam between the cascade and the Jev API, replaced by a fake in tests.
 type decider interface {
 	Decide(ctx context.Context, req decisionRequest) (decisionResponse, error)
+	Model() string
 }
 
 // JevError is a non-2xx answer from the Decisions API.
@@ -93,6 +94,9 @@ func NewJevClient(apiKey, model string) *JevClient {
 		model:    model,
 	}
 }
+
+// Model returns the Jev model ID sent with every request.
+func (c *JevClient) Model() string { return c.model }
 
 func (c *JevClient) Decide(ctx context.Context, req decisionRequest) (decisionResponse, error) {
 	req.Model = c.model

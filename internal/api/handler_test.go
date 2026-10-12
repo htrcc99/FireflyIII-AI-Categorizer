@@ -52,3 +52,11 @@ func TestPutConfigRejectsInvalidThresholds(t *testing.T) {
 		}
 	}
 }
+
+func TestMergeConfigUpdateEmptyJevModelResets(t *testing.T) {
+	empty := ""
+	got := mergeConfigUpdate(config.StoredConfig{JevModel: "typesafe/jev-2"}, configUpdateRequest{JevModel: &empty})
+	if got.JevModel != "" {
+		t.Errorf("JevModel = %q, want cleared so the env/default model applies", got.JevModel)
+	}
+}

@@ -7,11 +7,17 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"sync"
+	"time"
 )
 
 const (
 	jevUnavailablePrefix = "Jev unavailable — "
 	rawSeparator         = "\n\n--- LLM ---\n\n"
+
+	// jevCooldown is how long Jev is skipped after a failed call, so an outage
+	// does not make every transaction wait for the HTTP timeout.
+	jevCooldown = 60 * time.Second
 )
 
 // CascadeClassifier asks Jev first and only calls the wrapped LLM for
@@ -21,10 +27,14 @@ type CascadeClassifier struct {
 	llm           Classifier
 	th            Thresholds
 	customContext string
+
+	now       func() time.Time
+	mu        sync.Mutex
+	skipUntil time.Time
 }
 
 func newCascade(llm Classifier, jev decider, th Thresholds, customContext string) *CascadeClassifier {
-	return &CascadeClassifier{jev: jev, llm: llm, th: th, customContext: customContext}
+	return &CascadeClassifier{jev: jev, llm: llm, th: th, customContext: customContext, now: time.Now}
 }
 
 func (c *CascadeClassifier) Classify(ctx context.Context, req Request) (Result, error) {
@@ -34,13 +44,21 @@ func (c *CascadeClassifier) Classify(ctx context.Context, req Request) (Result, 
 		return c.llmOnly(ctx, req, "")
 	}
 
+	if c.coolingDown() {
+		return c.llmOnly(ctx, req, jevUnavailablePrefix)
+	}
+
 	q := buildJevQuery(req, c.customContext)
+	q.req.Model = c.jev.Model()
 	resp, err := c.jev.Decide(ctx, q.req)
 	if err == nil {
 		var d jevDecision
 		if d, err = q.interpret(resp, c.th); err == nil {
 			return c.decide(ctx, req, q, resp, d)
 		}
+	} else {
+		// Only failed calls pause Jev; a malformed answer is specific to one transaction.
+		c.startCooldown()
 	}
 
 	var je *JevError
@@ -107,6 +125,18 @@ func (c *CascadeClassifier) decide(ctx context.Context, req Request, q jevQuery,
 	return res, nil
 }
 
+func (c *CascadeClassifier) coolingDown() bool {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.now().Before(c.skipUntil)
+}
+
+func (c *CascadeClassifier) startCooldown() {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.skipUntil = c.now().Add(jevCooldown)
+}
+
 func (c *CascadeClassifier) llmOnly(ctx context.Context, req Request, reasonPrefix string) (Result, error) {
 	res, err := c.llm.Classify(ctx, req)
 	if err != nil {
@@ -118,7 +148,7 @@ func (c *CascadeClassifier) llmOnly(ctx context.Context, req Request, reasonPref
 }
 
 func matchDestination(a *AccountCandidate) *DestinationResult {
-	return &DestinationResult{Name: a.Name, Action: "MATCH", Confidence: "CLASSIFIED"}
+	return &DestinationResult{ID: a.ID, Name: a.Name, Action: "MATCH", Confidence: "CLASSIFIED"}
 }
 
 func jevReason(d jevDecision, outcome Outcome) string {

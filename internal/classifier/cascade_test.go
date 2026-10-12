@@ -5,12 +5,15 @@ import (
 	"errors"
 	"strings"
 	"testing"
+	"time"
 )
 
 type fakeDecider struct {
 	fn    func(decisionRequest) (decisionResponse, error)
 	calls int
 }
+
+func (f *fakeDecider) Model() string { return "fake-jev" }
 
 func (f *fakeDecider) Decide(_ context.Context, r decisionRequest) (decisionResponse, error) {
 	f.calls++
@@ -312,5 +315,60 @@ func TestCascadeDestinationOnlyConfidentMatchSkipsLLM(t *testing.T) {
 	res, _ := newCascade(llm, jev, DefaultThresholds, "").Classify(context.Background(), req)
 	if llm.calls != 0 || res.Destination == nil || res.Destination.Name != "Mercadona" {
 		t.Errorf("result = %+v calls = %d", res, llm.calls)
+	}
+}
+
+func TestCascadeMatchCarriesAccountID(t *testing.T) {
+	jev := &fakeDecider{fn: respond(t, "Groceries", map[string]float64{"Groceries": 0.92}, "Mercadona", map[string]float64{"Mercadona": 0.97})}
+	res, _ := newCascade(&fakeLLM{}, jev, DefaultThresholds, "").Classify(context.Background(), destReq())
+	if res.Destination == nil || res.Destination.ID != "10" {
+		t.Errorf("Destination = %+v, want ID 10", res.Destination)
+	}
+}
+
+func TestCascadeRawPromptShowsModel(t *testing.T) {
+	jev := &fakeDecider{fn: respond(t, "Groceries", map[string]float64{"Groceries": 0.92}, "", nil)}
+	res, _ := newCascade(&fakeLLM{}, jev, DefaultThresholds, "").Classify(context.Background(), baseRequest())
+	if !strings.Contains(res.RawPrompt, `"model": "fake-jev"`) {
+		t.Errorf("RawPrompt = %s", res.RawPrompt)
+	}
+}
+
+func TestCascadeSkipsJevDuringCooldown(t *testing.T) {
+	now := time.Date(2026, 10, 12, 12, 0, 0, 0, time.UTC)
+	jev := &fakeDecider{fn: func(decisionRequest) (decisionResponse, error) {
+		return decisionResponse{}, &JevError{Status: 503, Message: "down"}
+	}}
+	llm := &fakeLLM{res: Result{Outcome: Classified, Category: "Dining", Reason: "r"}}
+	c := newCascade(llm, jev, DefaultThresholds, "")
+	c.now = func() time.Time { return now }
+
+	for i := 0; i < 3; i++ {
+		res, err := c.Classify(context.Background(), baseRequest())
+		if err != nil || res.Source != SourceLLM || res.Reason != "Jev unavailable — r" {
+			t.Fatalf("call %d: %+v %v", i, res, err)
+		}
+	}
+	if jev.calls != 1 {
+		t.Errorf("Jev calls during cooldown = %d, want 1", jev.calls)
+	}
+
+	now = now.Add(jevCooldown)
+	jev.fn = respond(t, "Groceries", map[string]float64{"Groceries": 0.92}, "", nil)
+	res, _ := c.Classify(context.Background(), baseRequest())
+	if jev.calls != 2 || res.Source != SourceJev {
+		t.Errorf("after cooldown: jev calls = %d, res = %+v", jev.calls, res)
+	}
+}
+
+func TestCascadeInvalidAnswerDoesNotTripCooldown(t *testing.T) {
+	jev := &fakeDecider{fn: func(decisionRequest) (decisionResponse, error) {
+		return decisionResponse{Answers: map[string]choiceAnswer{}}, nil
+	}}
+	c := newCascade(&fakeLLM{}, jev, DefaultThresholds, "")
+	c.Classify(context.Background(), baseRequest())
+	c.Classify(context.Background(), baseRequest())
+	if jev.calls != 2 {
+		t.Errorf("Jev calls = %d, want 2 (a bad answer for one transaction must not disable Jev)", jev.calls)
 	}
 }
