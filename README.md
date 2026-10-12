@@ -148,7 +148,14 @@ POST /webhook  (Firefly III sends new transaction)
   (Optional) Fetch expense accounts (destination matching)
         │
         ▼
-  (Optional) Jev decides category [+ payee] — confident: done · unsure: continue · hopeless: NEEDS_REVIEW
+  History agrees? ── yes ──► apply category [+ payee] from history, no AI call
+        │ no
+        ▼
+  (Optional) Ask Jev: category [+ payee] in one request, with a probability per answer
+        │
+        ├── p ≥ accept     → CLASSIFIED, no LLM call
+        ├── p < review     → NEEDS_REVIEW, no LLM call
+        └── in between, or Jev unavailable
         │
         ▼
   Send to LLM with three-outcome prompt
@@ -171,6 +178,15 @@ its destination, or vice versa.
 Repeated transactions from the same merchant benefit from **history-based
 matching**: when enough past transactions agree on the same category and
 destination, the AI call is skipped entirely, reducing latency and API costs.
+
+When the [Jev pre-classifier](#jev-pre-classifier-optional) is enabled, it sits
+between history matching and the AI provider. Jev answers the category (and
+payee) question in a single request with a probability for each answer:
+confident answers are applied directly and hopeless ones are flagged for review,
+so only the uncertain middle band reaches the LLM. If Jev is confident the payee
+is a new business, the LLM is asked once just to name the new expense account.
+If a Jev call fails, the transaction goes straight to the LLM and Jev is paused
+for 60 seconds.
 
 ---
 
