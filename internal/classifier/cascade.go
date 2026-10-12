@@ -56,13 +56,13 @@ func (c *CascadeClassifier) decide(ctx context.Context, req Request, q jevQuery,
 	jevPrompt := prettyJSON(q.req)
 	jevResp := prettyRaw(resp.Raw)
 
-	var res Result
-	switch {
-	case d.categoryP >= c.th.High:
-		res = Result{Outcome: Classified, Category: d.category.Name}
-	case d.categoryP < c.th.Low:
-		res = Result{Outcome: NeedsReview}
-	default:
+	// Middle-band categories go to the LLM. So do destination-only callers
+	// whenever Jev is unsure about the payee, whatever the category band.
+	escalate := d.categoryP >= c.th.Low && d.categoryP < c.th.High
+	if req.DestinationOnly && d.dest == nil && !d.destNew {
+		escalate = true
+	}
+	if escalate {
 		llmRes, err := c.llm.Classify(ctx, req)
 		if err != nil {
 			return Result{}, err
@@ -76,6 +76,10 @@ func (c *CascadeClassifier) decide(ctx context.Context, req Request, q jevQuery,
 		return llmRes, nil
 	}
 
+	res := Result{Outcome: NeedsReview}
+	if d.categoryP >= c.th.High {
+		res = Result{Outcome: Classified, Category: d.category.Name}
+	}
 	res.Reason = jevReason(d, res.Outcome)
 	res.Source = SourceJev
 	res.RawPrompt = jevPrompt

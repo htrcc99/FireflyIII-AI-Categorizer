@@ -88,6 +88,11 @@ type Request struct {
 	// won't bother computing a destination even if expense accounts are provided.
 	CategoryOnly bool
 
+	// DestinationOnly signals that the category is already decided or not wanted,
+	// so the caller only needs the destination. The cascade then escalates to the
+	// LLM whenever Jev is unsure about the payee, regardless of category confidence.
+	DestinationOnly bool
+
 	// SystemPromptOverride replaces the built-in system prompt when non-empty.
 	// Used for special-purpose LLM calls like transfer destination suggestion.
 	SystemPromptOverride string

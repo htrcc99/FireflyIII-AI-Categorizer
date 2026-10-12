@@ -286,3 +286,31 @@ func TestCascadeBypassesJev(t *testing.T) {
 		}
 	}
 }
+
+func TestCascadeDestinationOnlyEscalatesWhenPayeeUnsure(t *testing.T) {
+	llmDest := &DestinationResult{Name: "Amazon", Action: "MATCH", Confidence: "CLASSIFIED"}
+	for _, catP := range []float64{0.95, 0.2} {
+		jev := &fakeDecider{fn: respond(t, "Groceries", map[string]float64{"Groceries": catP}, "Mercadona", map[string]float64{"Mercadona": 0.6})}
+		llm := &fakeLLM{res: Result{Outcome: Classified, Category: "Groceries", Destination: llmDest}}
+		req := destReq()
+		req.DestinationOnly = true
+		res, err := newCascade(llm, jev, DefaultThresholds, "").Classify(context.Background(), req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if llm.calls != 1 || res.Destination != llmDest || res.Source != SourceJevLLM {
+			t.Errorf("catP=%v: result = %+v calls = %d", catP, res, llm.calls)
+		}
+	}
+}
+
+func TestCascadeDestinationOnlyConfidentMatchSkipsLLM(t *testing.T) {
+	jev := &fakeDecider{fn: respond(t, "Groceries", map[string]float64{"Groceries": 0.95}, "Mercadona", map[string]float64{"Mercadona": 0.97})}
+	llm := &fakeLLM{}
+	req := destReq()
+	req.DestinationOnly = true
+	res, _ := newCascade(llm, jev, DefaultThresholds, "").Classify(context.Background(), req)
+	if llm.calls != 0 || res.Destination == nil || res.Destination.Name != "Mercadona" {
+		t.Errorf("result = %+v calls = %d", res, llm.calls)
+	}
+}

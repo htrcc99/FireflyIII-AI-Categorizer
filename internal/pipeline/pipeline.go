@@ -220,6 +220,9 @@ func (p *Pipeline) RunWithOptions(ctx context.Context, j *job.Job, transactionID
 		ExpenseAccounts:      clAccounts,
 		DestinationMatching:  opts.MatchDestination,
 		CategoryOnly:         opts.ClassifyCategory && !opts.MatchDestination,
+		// The category is either not wanted or already fixed by history; the
+		// classifier is only consulted for the destination.
+		DestinationOnly: opts.MatchDestination && (!opts.ClassifyCategory || historyMatchCat != ""),
 	})
 	if err != nil {
 		p.registry.SetFailed(j.ID, err.Error())

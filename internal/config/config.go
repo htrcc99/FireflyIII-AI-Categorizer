@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"log/slog"
 	"os"
 	"strconv"
 	"time"
@@ -93,6 +94,11 @@ func Load() (*Config, *Store, error) {
 	}
 
 	ApplyStored(cfg, store.Get())
+
+	if err := cfg.ValidateJevThresholds(); err != nil {
+		slog.Warn("invalid Jev thresholds, using defaults", "error", err)
+		cfg.JevHighThreshold, cfg.JevLowThreshold = 0.85, 0.50
+	}
 
 	return cfg, store, nil
 }
@@ -197,7 +203,8 @@ func (c *Config) IsConfigured() bool {
 
 // ValidateJevThresholds requires 0 <= low <= high <= 1.
 func (c *Config) ValidateJevThresholds() error {
-	if c.JevLowThreshold < 0 || c.JevHighThreshold > 1 || c.JevLowThreshold > c.JevHighThreshold {
+	// Written as a positive range check so NaN (which fails every comparison) is rejected.
+	if !(0 <= c.JevLowThreshold && c.JevLowThreshold <= c.JevHighThreshold && c.JevHighThreshold <= 1) {
 		return fmt.Errorf("jev thresholds must satisfy 0 <= low (%.2f) <= high (%.2f) <= 1", c.JevLowThreshold, c.JevHighThreshold)
 	}
 	return nil

@@ -1,6 +1,9 @@
 package config
 
-import "testing"
+import (
+	"math"
+	"testing"
+)
 
 func TestLoadJevDefaultsAndEnv(t *testing.T) {
 	t.Setenv("CONFIG_FILE", t.TempDir()+"/config.json")
@@ -54,11 +57,26 @@ func TestValidateJevThresholds(t *testing.T) {
 		{0.4, 0.5, false},
 		{1.1, 0.5, false},
 		{0.8, -0.1, false},
+		{math.NaN(), 0.5, false},
+		{0.85, math.Inf(-1), false},
 	}
 	for _, tc := range cases {
 		err := (&Config{JevHighThreshold: tc.high, JevLowThreshold: tc.low}).ValidateJevThresholds()
 		if (err == nil) != tc.ok {
 			t.Errorf("high=%v low=%v: err = %v", tc.high, tc.low, err)
 		}
+	}
+}
+
+func TestLoadResetsInvalidThresholds(t *testing.T) {
+	t.Setenv("CONFIG_FILE", t.TempDir()+"/config.json")
+	t.Setenv("JEV_HIGH_THRESHOLD", "85")
+	t.Setenv("JEV_LOW_THRESHOLD", "NaN")
+	cfg, _, err := Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.JevHighThreshold != 0.85 || cfg.JevLowThreshold != 0.50 {
+		t.Errorf("invalid env thresholds not reset: high=%v low=%v", cfg.JevHighThreshold, cfg.JevLowThreshold)
 	}
 }
