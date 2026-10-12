@@ -396,6 +396,15 @@
                 <img src="/docs/images/settings_page.webp" alt="Settings page" style="display:none" onload="this.style.display=this.naturalWidth?'':'none'">
 
                 <!-- ═══════════ THREE-OUTCOME MODEL ═══════════ -->
+                <h4>Jev pre-classifier</h4>
+                <p>
+                    Enable <strong>Use Jev before the AI provider</strong> and enter an OpenRouter key to let
+                    TypeSafe's Jev decision model classify transactions first. Jev returns a probability for its
+                    choice: at or above the <em>accept</em> threshold the category is applied directly, below the
+                    <em>review</em> threshold the transaction goes to the Review page, and anything in between is
+                    sent to the AI provider. The Jobs table shows which stage decided each transaction.
+                </p>
+
                 <h2 id="outcomes">The three-outcome classification model</h2>
                 <p>Every classification produces one of three outcomes:</p>
 
@@ -492,6 +501,9 @@
         │
         ▼
   Fetch categories from Firefly III
+        │
+        ▼
+  (Optional) Jev decides category [+ payee] — confident: done · unsure: continue · hopeless: NEEDS_REVIEW
         │
         ▼
   Send to LLM with three-outcome prompt

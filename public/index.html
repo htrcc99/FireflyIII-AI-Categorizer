@@ -616,6 +616,53 @@
                                                 </div>
                                             </div>
                                         </div>
+                                        <hr>
+                                        <h4 style="margin-top:0"><i class="fa fa-bolt"></i> Jev pre-classifier (OpenRouter)</h4>
+                                        <div class="form-group">
+                                            <div class="col-sm-offset-4 col-sm-8">
+                                                <div class="checkbox">
+                                                    <label>
+                                                        <input type="checkbox" id="cfg-jev-enabled">
+                                                        <strong>Use Jev before the AI provider</strong>
+                                                    </label>
+                                                </div>
+                                                <p class="help-block" style="margin-top:2px">
+                                                    Jev decides the category with calibrated probabilities; only
+                                                    uncertain cases are sent to the AI provider above.
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="col-sm-4 control-label">OpenRouter key</label>
+                                            <div class="col-sm-8">
+                                                <input type="password" class="form-control" id="cfg-openrouter-key"
+                                                    placeholder="Leave blank to keep existing">
+                                                <p class="help-block" id="openrouter-key-hint"
+                                                    style="display:none;color:#3c763d">
+                                                    <i class="fa fa-check-circle"></i> Key is configured
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="col-sm-4 control-label">Model</label>
+                                            <div class="col-sm-8">
+                                                <input type="text" class="form-control" id="cfg-jev-model"
+                                                    placeholder="typesafe/jev-1.13">
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="col-sm-4 control-label">Thresholds</label>
+                                            <div class="col-sm-4">
+                                                <input type="number" class="form-control" id="cfg-jev-high"
+                                                    min="0" max="1" step="0.05" placeholder="0.85">
+                                                <p class="help-block">Accept at or above</p>
+                                            </div>
+                                            <div class="col-sm-4">
+                                                <input type="number" class="form-control" id="cfg-jev-low"
+                                                    min="0" max="1" step="0.05" placeholder="0.50">
+                                                <p class="help-block">Needs review below</p>
+                                            </div>
+                                        </div>
                                     </form>
                                 </div>
                             </div>

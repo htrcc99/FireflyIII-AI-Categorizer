@@ -147,6 +147,9 @@ POST /webhook  (Firefly III sends new transaction)
   (Optional) Fetch expense accounts (destination matching)
         │
         ▼
+  (Optional) Jev decides category [+ payee] — confident: done · unsure: continue · hopeless: NEEDS_REVIEW
+        │
+        ▼
   Send to LLM with three-outcome prompt
         │
         ├── CLASSIFIED    → set category + tag "ai:classified"
@@ -218,6 +221,20 @@ All variables are optional. When they are absent, the server starts normally and
 | `GEMINI_MODEL` | `gemini-2.5-flash` | Gemini model name |
 | `DEEPSEEK_API_KEY` | — | DeepSeek API key |
 | `DEEPSEEK_MODEL` | `deepseek-chat` | DeepSeek model name |
+
+### Jev pre-classifier (optional)
+
+[Jev](https://openrouter.ai/docs/guides/community/jev) is TypeSafe's decision model on OpenRouter. When enabled, it picks the category (and payee account) first, with calibrated probabilities, and only uncertain transactions are sent to the AI provider above — cutting LLM calls and cost.
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `JEV_ENABLED` | `false` | Ask Jev before the AI provider |
+| `OPENROUTER_API_KEY` | — | OpenRouter API key used for Jev |
+| `JEV_MODEL` | `typesafe/jev-1.13` | Jev model ID |
+| `JEV_HIGH_THRESHOLD` | `0.85` | Jev probability at or above which the category is accepted (`CLASSIFIED`) |
+| `JEV_LOW_THRESHOLD` | `0.50` | Below this the transaction is flagged `NEEDS_REVIEW` without an LLM call; between the two thresholds the AI provider decides |
+
+When Jev picks "none of the listed accounts" with high confidence, the AI provider is called once to name the new expense account. If Jev is unavailable, every transaction falls back to the AI provider. The Jobs page shows who decided each transaction: `History`, `Jev`, `Jev → LLM` or `LLM`.
 
 ### Server
 
