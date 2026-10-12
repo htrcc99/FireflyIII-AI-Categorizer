@@ -31,6 +31,12 @@ type StoredConfig struct {
 	SearchEngine            string `json:"search_engine,omitempty"` // "google", "duckduckgo", or "" (disabled)
 	WorkerConcurrency       int    `json:"worker_concurrency,omitempty"`
 	BatchConcurrency        int    `json:"batch_concurrency,omitempty"`
+
+	JevEnabled       *bool    `json:"jev_enabled,omitempty"`
+	OpenRouterKey    string   `json:"openrouter_api_key,omitempty"`
+	JevModel         string   `json:"jev_model,omitempty"`
+	JevHighThreshold *float64 `json:"jev_high_threshold,omitempty"`
+	JevLowThreshold  *float64 `json:"jev_low_threshold,omitempty"`
 }
 
 // Store manages a JSON config file that overlays environment variables.

@@ -112,6 +112,10 @@ func runBatch(cfg *config.Config, reg *job.Registry, pool *worker.Pool) {
 		DeepseekKey:   cfg.DeepseekKey,
 		DeepseekModel: cfg.DeepseekModel,
 		CustomContext: cfg.CustomSystemContext,
+		JevEnabled:    cfg.JevEnabled,
+		OpenRouterKey: cfg.OpenRouterKey,
+		JevModel:      cfg.JevModel,
+		JevThresholds: classifier.Thresholds{High: cfg.JevHighThreshold, Low: cfg.JevLowThreshold},
 	})
 	if err != nil {
 		slog.Error("batch: classifier init failed", "error", err)
