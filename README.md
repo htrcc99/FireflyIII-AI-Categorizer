@@ -90,7 +90,7 @@ In the **Settings → AI Provider** section, choose a provider and enter your AP
 
 **OpenAI** — create a key at [platform.openai.com/api-keys](https://platform.openai.com/api-keys). The default model is `gpt-4o-mini`, which is fast and inexpensive.
 
-**Google Gemini** — go to [aistudio.google.com](https://aistudio.google.com), sign in, and click **Get API key**. The default model is `gemini-3.1-flash`.
+**Google Gemini** — go to [aistudio.google.com](https://aistudio.google.com), sign in, and click **Get API key**. The default model is `gemini-3.1-flash-lite`.
 
 **DeepSeek** — create an account at [platform.deepseek.com](https://platform.deepseek.com), go to **API keys**, and generate a new key. The default model is `deepseek-chat`.
 
@@ -244,7 +244,7 @@ All variables are optional. When they are absent, the server starts normally and
 | `OPENAI_MODEL` | `gpt-4o-mini` | OpenAI model name |
 | `OPENAI_BASE_URL` | — | Override for OpenAI-compatible APIs (Ollama, Azure, etc.) |
 | `GEMINI_API_KEY` | — | Google Gemini API key |
-| `GEMINI_MODEL` | `gemini-2.5-flash` | Gemini model name |
+| `GEMINI_MODEL` | `gemini-3.1-flash-lite` | Gemini model name |
 | `DEEPSEEK_API_KEY` | — | DeepSeek API key |
 | `DEEPSEEK_MODEL` | `deepseek-chat` | DeepSeek model name |
 
@@ -270,6 +270,7 @@ When Jev picks "none of the listed accounts" with high confidence, the AI provid
 | `ENABLE_UI` | `true` | Set to `false` to disable the web UI |
 | `CONFIG_FILE` | `/data/config.json` (Docker) | Path to the persistent settings file |
 | `TAG_PREFIX` | `ai` | Prefix for tags written to transactions (`ai:classified`, etc.) |
+| `DESTINATION_MATCH_ENABLED` | `false` | Also match or create the expense account (payee) for each withdrawal — see [Destination account matching](#destination-account-matching) |
 
 ### Processing
 
