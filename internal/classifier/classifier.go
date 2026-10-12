@@ -13,6 +13,14 @@ const (
 	NeedsReview Outcome = "NEEDS_REVIEW"
 )
 
+// Decision sources, recorded on Result.Source and shown in the Jobs UI.
+const (
+	SourceHistory = "history"
+	SourceJev     = "jev"
+	SourceJevLLM  = "jev+llm"
+	SourceLLM     = "llm"
+)
+
 type HistoricalEntry struct {
 	TransactionID        string
 	DestinationName      string
@@ -96,6 +104,9 @@ type Result struct {
 	// Destination is set when destination-account matching was enabled
 	// and the LLM returned a valid destination suggestion.
 	Destination *DestinationResult
+
+	// Source identifies which stage produced this result. Empty means "llm".
+	Source string
 }
 
 type Classifier interface {

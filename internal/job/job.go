@@ -34,5 +34,8 @@ type Job struct {
 	DestinationAccount string `json:"destination_account,omitempty"`
 	DestinationAction  string `json:"destination_action,omitempty"` // "MATCH" or "CREATE"
 
+	// Source records which stage decided the outcome: "history", "jev", "jev+llm" or "llm".
+	Source string `json:"source,omitempty"`
+
 	Error string `json:"error,omitempty"`
 }

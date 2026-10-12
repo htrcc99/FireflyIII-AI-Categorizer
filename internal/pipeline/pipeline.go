@@ -186,7 +186,7 @@ func (p *Pipeline) RunWithOptions(ctx context.Context, j *job.Job, transactionID
 				}
 			}
 		}
-		p.registry.SetFinished(j.ID, string(classifier.Classified), historyMatchCat, reason, "", "", "", destName, destAction)
+		p.registry.SetFinished(j.ID, string(classifier.Classified), historyMatchCat, reason, "", "", "", destName, destAction, classifier.SourceHistory)
 		p.cache.Append(classifier.HistoricalEntry{
 			TransactionID:        transactionID,
 			DestinationName:      j.DestinationName,
@@ -339,6 +339,10 @@ func (p *Pipeline) RunWithOptions(ctx context.Context, j *job.Job, transactionID
 		finishedReason = outcome.Reason
 	}
 
+	source := result.Source
+	if source == "" {
+		source = classifier.SourceLLM
+	}
 	p.registry.SetFinished(
 		j.ID,
 		finishedOutcome,
@@ -349,6 +353,7 @@ func (p *Pipeline) RunWithOptions(ctx context.Context, j *job.Job, transactionID
 		result.RawResponse,
 		destAccount,
 		destAction,
+		source,
 	)
 
 	cachedCategory := finishedCategory
