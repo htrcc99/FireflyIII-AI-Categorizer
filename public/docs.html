@@ -230,6 +230,7 @@
                 <ul>
                     <li><strong>Real-time webhook processing</strong> — new withdrawals are classified automatically as they are created.</li>
                     <li><strong>Multiple AI providers</strong> — OpenAI, Google Gemini, DeepSeek, or any OpenAI-compatible endpoint (Ollama, Azure, etc.).</li>
+                    <li><strong>Jev pre-classifier (optional)</strong> — TypeSafe's Jev decision model, via OpenRouter, picks the category, payee account and transfer destination first, with calibrated probabilities. Only uncertain cases are sent to the AI provider, cutting LLM calls and cost. See <a href="#jev">Jev pre-classifier</a>.</li>
                     <li><strong>Three-outcome model</strong> — the AI tells you whether it is confident (CLASSIFIED), unsure (ASSUMED), or cannot classify (NEEDS REVIEW).</li>
                     <li><strong>Web UI dashboard</strong> — real-time job monitoring, transaction browser, review queue, and full settings management.</li>
                     <li><strong>Batch operations</strong> — classify all uncategorised withdrawals at once, or re-classify any selection of transactions.</li>
