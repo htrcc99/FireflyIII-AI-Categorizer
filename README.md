@@ -234,7 +234,7 @@ All variables are optional. When they are absent, the server starts normally and
 | `JEV_HIGH_THRESHOLD` | `0.85` | Jev probability at or above which the category is accepted (`CLASSIFIED`) |
 | `JEV_LOW_THRESHOLD` | `0.50` | Below this the transaction is flagged `NEEDS_REVIEW` without an LLM call; between the two thresholds the AI provider decides |
 
-When Jev picks "none of the listed accounts" with high confidence, the AI provider is called once to name the new expense account. If a Jev call fails, transactions fall back to the AI provider and Jev is skipped for 60 seconds before being tried again. The Jobs page shows who decided each transaction: `History`, `Jev`, `Jev → LLM` or `LLM`.
+When Jev picks "none of the listed accounts" with high confidence, the AI provider is called once to name the new expense account. If a Jev call fails, transactions fall back to the AI provider and Jev is skipped for 60 seconds before being tried again. The Jobs page shows who decided each transaction: `History`, `Jev`, `Jev → LLM` or `LLM`. Jev also suggests the destination account in the Review page's "Convert to Transfers" panel, using the same thresholds.
 
 ### Server
 

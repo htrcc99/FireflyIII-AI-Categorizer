@@ -1080,7 +1080,7 @@ async function autoSuggestTransfer(gi, desc) {
                 if (!s2.value) s2.value = s.account_id;
             });
             result.innerHTML = '<span class="text-success" style="font-size:11px"><i class="fa fa-check-circle"></i> '
-                + (s.source === 'history' ? 'History: ' : 'AI: ')
+                + (s.source === 'history' ? 'History: ' : s.source === 'jev' ? 'Jev: ' : 'AI: ')
                 + '<strong>' + esc(s.account_name) + '</strong></span>';
         } else {
             result.innerHTML = '<span class="text-muted" style="font-size:11px">Could not determine.</span>';

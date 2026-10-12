@@ -736,7 +736,7 @@ func (h *Handler) categorizeTransaction(w http.ResponseWriter, r *http.Request) 
 type suggestTransferResponse struct {
 	AccountID   string `json:"account_id"`
 	AccountName string `json:"account_name"`
-	Source      string `json:"source"` // "history" or "llm"
+	Source      string `json:"source"` // "history", "jev" or "llm"
 }
 
 // suggestTransferDestination suggests a destination asset account for a
@@ -775,7 +775,7 @@ func (h *Handler) suggestTransferDestination(w http.ResponseWriter, r *http.Requ
 				}
 			}
 		}
-		// History ID no longer valid, fall through to LLM.
+		// History ID no longer valid, fall through to Jev / LLM.
 	}
 
 	if pipe == nil {
@@ -789,7 +789,7 @@ func (h *Handler) suggestTransferDestination(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	// Use a simple LLM prompt to pick the best destination account.
+	// Jev (when enabled) or the LLM picks the best destination account.
 	clAccts := make([]classifier.AccountCandidate, len(accts))
 	for i, a := range accts {
 		clAccts[i] = classifier.AccountCandidate{ID: a.ID, Name: a.Name}
@@ -802,19 +802,11 @@ func (h *Handler) suggestTransferDestination(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	// Validate the LLM's suggestion.
-	for _, a := range accts {
-		if strings.EqualFold(a.Name, result.AccountName) {
-			writeJSON(w, http.StatusOK, suggestTransferResponse{
-				AccountID:   a.ID,
-				AccountName: a.Name,
-				Source:      "llm",
-			})
-			return
-		}
-	}
-
-	writeJSON(w, http.StatusOK, suggestTransferResponse{})
+	writeJSON(w, http.StatusOK, suggestTransferResponse{
+		AccountID:   result.AccountID,
+		AccountName: result.AccountName,
+		Source:      result.Source,
+	})
 }
 
 type convertToTransferRequest struct {
