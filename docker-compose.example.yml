@@ -1,0 +1,40 @@
+# Example Docker Compose setup for the Firefly III AI Categorizer.
+#
+#   cp .env.example .env                       # then fill in your values
+#   docker compose -f docker-compose.example.yml up -d --build
+#
+# Open http://localhost:3000 afterwards. Anything left out of .env can also be
+# set from the Settings page; values saved there take precedence over .env.
+#
+# WARNING: the app has no built-in authentication. Keep it on a private network
+# or behind a reverse proxy with authentication.
+
+services:
+  categorizer:
+    # Builds from this repository, so it includes every feature on this branch
+    # (e.g. the Jev pre-classifier).
+    build: .
+    image: firefly-ai-categorizer:local
+    # Alternatively, use the prebuilt upstream image (may lag behind this repo):
+    # image: ghcr.io/ejagombar/fireflyiii-ai-categorizer:latest
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "3000:3000"
+    volumes:
+      # Settings saved from the UI are stored in /data/config.json.
+      - ./categorizer-data:/data
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    # If Firefly III runs in another Compose project on the same host, join its
+    # network and set FIREFLY_URL to its service name, e.g. http://app:8080.
+    # networks:
+    #   - firefly
+
+# networks:
+#   firefly:
+#     external: true
+#     name: firefly_iii_default
