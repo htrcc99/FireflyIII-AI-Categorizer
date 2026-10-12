@@ -213,8 +213,8 @@ for 60 seconds.
 Requires Go 1.22 or later.
 
 ```bash
-git clone https://github.com/ejagombar/FireflyIII-AI-Categorizer.git
-cd firefly-iii-ai-categorize
+git clone https://github.com/htrcc99/FireflyIII-AI-Categorizer.git
+cd FireflyIII-AI-Categorizer
 go build -o firefly-ai-categorize ./cmd/server
 ./firefly-ai-categorize
 ```
