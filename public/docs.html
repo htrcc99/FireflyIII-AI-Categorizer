@@ -211,9 +211,9 @@
                         <li><a href="#overview">Overview</a></li>
                         <li><a href="#setup">Setup</a></li>
                         <li><a href="#pages">Using the application</a></li>
-                        <li><a href="#jev">Jev pre-classifier</a></li>
                         <li><a href="#outcomes">The three-outcome classification model</a></li>
                         <li><a href="#destination">Destination account matching</a></li>
+                        <li><a href="#jev">Jev pre-classifier</a></li>
                         <li><a href="#batch">Batch &amp; transaction operations</a></li>
                         <li><a href="#architecture">How it works</a></li>
                     </ul>
@@ -394,27 +394,12 @@
                     and take effect immediately without restarting. The <strong>Behaviour</strong> section lets you
                     customize the tag prefix, provide additional context to the AI (e.g. "I have no business expenses"),
                     and toggle destination matching. The <strong>Advanced</strong> section exposes tuning parameters
-                    for history context, worker concurrency, and batch throughput.
+                    for history context, worker concurrency, and batch throughput. The optional
+                    <strong>Jev pre-classifier</strong> panel is described in <a href="#jev">its own section</a>.
                 </p>
                 <img src="/docs/images/settings_page.webp" alt="Settings page" style="display:none" onload="this.style.display=this.naturalWidth?'':'none'">
 
                 <!-- ═══════════ THREE-OUTCOME MODEL ═══════════ -->
-                <h4 id="jev">Jev pre-classifier</h4>
-                <p>
-                    Enable <strong>Use Jev before the AI provider</strong> and enter an OpenRouter key to let
-                    TypeSafe's Jev decision model classify transactions first. Jev returns a probability for its
-                    choice: at or above the <em>accept</em> threshold the category is applied directly, below the
-                    <em>review</em> threshold the transaction goes to the Review page, and anything in between is
-                    sent to the AI provider. The Jobs table shows which stage decided each transaction.
-                </p>
-                <p>
-                    Jev also suggests the destination asset account in the <strong>Review Conversion to Transfer</strong>
-                    section, using the same two thresholds: a confident answer is pre-selected as <em>Jev</em>, an
-                    uncertain one is passed to the AI provider, and a very unlikely one leaves the dropdown empty
-                    (<em>Could not determine</em>). If a Jev call fails, Jev is skipped for 60 seconds and the AI
-                    provider is used instead.
-                </p>
-
                 <h2 id="outcomes">The three-outcome classification model</h2>
                 <p>Every classification produces one of three outcomes:</p>
 
@@ -486,6 +471,61 @@
                     <a href="#jev">Jev pre-classifier</a> is enabled and confident (<em>Jev</em>), and the AI
                     provider decides in the remaining cases (<em>AI</em>). The suggestion is only a pre-selection —
                     nothing is converted until you click <strong>Convert to Transfer</strong>.
+                </p>
+
+                <!-- ═══════════ JEV PRE-CLASSIFIER ═══════════ -->
+                <h2 id="jev">Jev pre-classifier</h2>
+                <p>
+                    <a href="https://openrouter.ai/docs/guides/community/jev" target="_blank">Jev</a> is TypeSafe's
+                    decision model, served by OpenRouter. Unlike the AI provider, it does not write text: it picks one
+                    option from a list you give it and returns a probability for that choice. When enabled, the
+                    categorizer asks Jev first and only sends uncertain cases to the AI provider, which cuts LLM calls
+                    and cost. It is optional and off by default.
+                </p>
+
+                <h4>Setup</h4>
+                <p>In <strong>Settings &rarr; AI Provider</strong>, under <strong>Jev pre-classifier (OpenRouter)</strong>:</p>
+                <ul>
+                    <li><strong>Use Jev before the AI provider</strong> — turns the pre-classifier on. The AI provider above must still be configured, as it handles the uncertain cases.</li>
+                    <li><strong>OpenRouter key</strong> — create one at <a href="https://openrouter.ai/keys" target="_blank">openrouter.ai/keys</a>.</li>
+                    <li><strong>Model</strong> — defaults to <code>typesafe/jev-1.13</code>. Clear the field and save to return to the default.</li>
+                    <li><strong>Thresholds</strong> — <em>Accept at or above</em> (default 0.85) and <em>Needs review below</em> (default 0.50). The accept value must be greater than or equal to the review value, and both must be between 0 and 1.</li>
+                </ul>
+                <p>
+                    The same settings can be provided with the <code>JEV_ENABLED</code>, <code>OPENROUTER_API_KEY</code>,
+                    <code>JEV_MODEL</code>, <code>JEV_HIGH_THRESHOLD</code> and <code>JEV_LOW_THRESHOLD</code>
+                    environment variables.
+                </p>
+
+                <h4>How decisions are made</h4>
+                <ul>
+                    <li>
+                        <strong>Category</strong> — at or above the accept threshold the category is applied as
+                        CLASSIFIED; below the review threshold the transaction is flagged NEEDS REVIEW; anything in
+                        between is sent to the AI provider, which decides as usual.
+                    </li>
+                    <li>
+                        <strong>Payee account</strong> (when destination matching is on) — a confident match to an
+                        existing expense account is applied directly. When Jev is confident the payee is not in your
+                        list, the AI provider is asked once to name the new account. An uncertain payee is left for
+                        review, unless the categorizer only needed the payee (for example when the category already
+                        came from history), in which case the AI provider decides.
+                    </li>
+                    <li>
+                        <strong>Transfer destination</strong> — in the <strong>Review Conversion to Transfer</strong>
+                        section, a confident answer is pre-selected as <em>Jev</em>, an uncertain one is passed to the
+                        AI provider, and a very unlikely one leaves the dropdown empty (<em>Could not determine</em>).
+                    </li>
+                </ul>
+
+                <h4>Fallback and visibility</h4>
+                <p>
+                    If a Jev call fails (network error, outage, missing credit), the AI provider is used instead and
+                    Jev is skipped for 60 seconds before being tried again, so an outage does not slow every
+                    transaction down. The Jobs table labels each result with the stage that decided it —
+                    <em>History</em>, <em>Jev</em>, <em>Jev &rarr; LLM</em> or <em>LLM</em> — and the expanded row
+                    shows the request sent to Jev and its answer. When Jev decides alone, the note written to the
+                    transaction shows its choice and probability, e.g. <code>Jev: Groceries (0.92) · next: Dining (0.05)</code>.
                 </p>
 
                 <!-- ═══════════ BATCH OPERATIONS ═══════════ -->
